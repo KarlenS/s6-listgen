@@ -46,13 +46,6 @@ if os.path.isfile(outname):
 hostName = "lucifer1.spa.umn.edu"
 portNum = 33060
 
-#Setting up mySQL databasi
-#dbOffline = MySQLdb.connect(host=hostName, port=portNum, user="readonly", db="VOFFLINE")
-#cursorVOff = dbOffline.cursor()
-
-#dbVERITAS = MySQLdb.connect(host=hostName, port=portNum, user="readonly", db="VERITAS")
-#cursorVER = dbVERITAS.cursor()
-
 #Dates for array configs
 NA_date = "2009-09-01"
 UA_date = "2012-09-01"
@@ -60,40 +53,16 @@ UA_date = "2012-09-01"
 #Dictionary to keep track of groups
 groups = {}
 
-#Loop through file and execute for each run
 
 #mySQL queries
 
 lines = infile.read().rstrip().split('\n') #temporary - make this nicer too...
 infile.close()
 
+#Loop through file and execute for each run
 for run in lines:
   runID = run[-17:-12]
   print "Querying",runID, "..."
-
-  #REQUIRES MySQLdb
-  #temp1 = cursorVOff.execute("select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" % (runID)) #maybe get rid of temp= depending if output shows up
-  #query1 = cursorVOff.fetchall()
-
-  #temp2a = cursorVER.execute("select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" % (NA_date, runID))
-  #query2a = cursorVER.fetchall()
-
-  #temp2b = cursorVER.execute("select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" % (UA_date, runID))
-  #query2b = cursorVER.fetchall() 
-
-  #temp3 = cursorVER.execute("select MONTH(data_start_time) from tblRun_Info where run_id='%s'" % (runID))
-  #query3 = cursorVER.fetchall()
-  
-  #temp4 = cursorVER.execute("select config_mask from tblRun_Info where run_id='%s'" % (runID))
-  #query4 = cursorVER.fetchall()
-
-  #TEL_CUT_MASK=query1[0][0]
-  #DATE_DIFF=query2a[0][0]
-  #DATE_DIFF2=query2b[0][0]
-  #MONTH=query3[0][0]
-  #CONFIG_MASK=query4[0][0]
-  #
-  #END of MySQLdb queries
 
   #Do mySQL queries through command line, using subprocess module
   execCMD = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
@@ -217,10 +186,6 @@ for run in lines:
     groups[fullConfig].append(run)
   else:
     groups[fullConfig] = [run]
-
-  #print runID,":",TEL_CUT_MASK, DATE_DIFF, DATE_DIFF2, MONTH, CONFIG_MASK
-  #print runID,":", ARRAY, SEASON,TELTOANA
-  #print fullConfig
 
 #opening file for writing out the final runlist
 outfile = open(outname,"w")
