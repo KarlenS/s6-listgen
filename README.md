@@ -1,4 +1,4 @@
 s6-listgen
 ==========
 
-formats stage6 runlist
+formats VEGAS stage6 runlist to be compatable with v2.5.1+
