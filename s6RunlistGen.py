@@ -19,7 +19,9 @@
 
 import subprocess 
 import sys
+import argparse
 import os.path
+
 
 class ListGen(object):
 
@@ -27,6 +29,12 @@ class ListGen(object):
     self.info = info
     self.query = query
 
+
+  def runSQL(runID, database, execCMDi, hostName, portNum):
+
+    execCMD = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
+    sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D",database, "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
+    QUERY, err1 = sqlOut.communicate()
 
 def main():
  # Check if an arg is passed and if file exists
