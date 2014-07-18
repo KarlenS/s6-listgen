@@ -50,11 +50,38 @@ class ListGen(object):
 
   
   def get_tel_combo(self, query):
-    CONFIG_MASK = int(query.rstrip().split("\n")[1])
+    
+    config_mask_ref={0 : "xxxx",
+                     1 : "1xxx",
+                     2 : "x2xx",
+                     3 : "12xx",
+                     4 : "xx3x",
+                     5 : "1x3x",
+                     6 : "x23x",
+                     7 : "123x",
+                     8 : "xxx4",
+                     9 : "1xx4",
+                     10 : "x2x4",
+                     11 : "12x4",
+                     12 : "xx34",
+                     13 : "1x34",
+                     14 : "x234",
+                     15 : "1234",
+    }
+
+    config_mask = int(query.rstrip().split("\n")[1])
+
+    return ref_dict[config_mask]
 
   
   def get_atm(self, query):
-    MONTH = int(query.rstrip().split("\n")[1])
+
+    month = int(query.rstrip().split("\n")[1])
+
+    if month <= 3 or month >= 11:
+      return "ATM21"
+    elif month >= 4 and month <= 10:
+      return "ATM22"
 
 
   def get_array_config(self, query1,query2):
@@ -69,6 +96,9 @@ class ListGen(object):
       return "NA"
     elif date_diff < 0:
       return "OA"
+
+  def print_runlist(self):
+     print "temp temp temp"
 
 def main():
  # Check if an arg is passed and if file exists
@@ -149,10 +179,10 @@ def main():
     
   
     #Choose seasonal tables
-    if MONTH <= 3 or MONTH >= 11:
-      SEASON = "ATM21"
-    elif MONTH >= 4 and MONTH <= 10:
-      SEASON = "ATM22"
+    #if MONTH <= 3 or MONTH >= 11:
+    #  SEASON = "ATM21"
+    #elif MONTH >= 4 and MONTH <= 10:
+    #  SEASON = "ATM22"
   
     
     #Choose telescope combination
@@ -163,38 +193,8 @@ def main():
     T4 = "x"
     if TEL_CUT_MASK == "NULL":
       print "No DQM info exists, using observer reported tel-config"
-      if CONFIG_MASK == 1:
-        TELTOANA = "1xxx"
-      elif CONFIG_MASK == 2:
-        TELTOANA = "2xxx"
-      elif CONFIG_MASK == 3:
-        TELTOANA = "12xx"
-      elif CONFIG_MASK == 4:
-        TELTOANA = "xx3x"
-      elif CONFIG_MASK == 5:
-        TELTOANA = "1x3x"
-      elif CONFIG_MASK == 6:
-        TELTOANA = "x23x"
-      elif CONFIG_MASK == 7:
-        TELTOANA = "123x"
-      elif CONFIG_MASK == 8:
-        TELTOANA = "xxx4"
-      elif CONFIG_MASK == 9:
-        TELTOANA = "1xx4"
-      elif CONFIG_MASK == 10:
-        TELTOANA = "x2x4"
-      elif CONFIG_MASK == 11:
-        TELTOANA = "12x4"
-      elif CONFIG_MASK == 12:
-        TELTOANA = "xx34"
-      elif CONFIG_MASK == 13:
-        TELTOANA = "1x34"
-      elif CONFIG_MASK == 14:
-        TELTOANA = "x234"
-      elif CONFIG_MASK == 15:
-        TELTOANA = "1234"
-      elif CONFIG_MASK == 0:
-        TELTOANA = "xxxx"
+      #call run.get_tel_combo(query)
+    
     #if TEL_CUT_MASK does exist, crosschecking with CONFIG_MASK
     else:
       print "DQM info available, cross-checking with observer-reported tel config"
