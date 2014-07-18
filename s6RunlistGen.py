@@ -99,32 +99,35 @@ class ListGen(object):
     elif date_diff < 0:
       return "OA"
 
+  def organize_into_groups(self,code): #not sure yet how to best use this
+    
+    
   def print_runlist(self,filename):
   #opening file for writing out the final runlist
-  outfile = open(filename,"w")
+    outfile = open(filename,"w")
   
-  gROUPID = 0
-  for key, value in groups.iteritems():
-    if GROUPID == 0:
-      for l in value:
-        outfile.write( l+"\n" )
-      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-      outfile.write( key + "\n" )
-      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
-      GROUPID += 1
-    else:
-      outfile.write( "[RUNLIST ID: %s]\n" % (GROUPID) )
-      for l in value:
-        outfile.write( l +"\n")
-      outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
-      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-      outfile.write( key +"\n")
-      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
-      outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
-      outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
-      GROUPID += 1
+    gROUPID = 0
+    for key, value in groups.iteritems():
+      if GROUPID == 0:
+        for l in value:
+          outfile.write( l+"\n" )
+        outfile.write( "[EA ID: %s]\n" % (GROUPID) )
+        outfile.write( key + "\n" )
+        outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
+        GROUPID += 1
+      else:
+        outfile.write( "[RUNLIST ID: %s]\n" % (GROUPID) )
+        for l in value:
+          outfile.write( l +"\n")
+        outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
+        outfile.write( "[EA ID: %s]\n" % (GROUPID) )
+        outfile.write( key +"\n")
+        outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
+        outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
+        outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
+        GROUPID += 1
   
-  outfile.close()
+    outfile.close()
 
 def main():
  # Check if an arg is passed and if file exists
