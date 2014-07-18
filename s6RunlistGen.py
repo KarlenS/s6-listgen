@@ -73,7 +73,9 @@ class ListGen(object):
 
     return ref_dict[config_mask]
 
-  
+  def reconcile_tels(self, tel_cut_mask, tel_config_mask):
+
+    
   def get_atm(self, query):
 
     month = int(query.rstrip().split("\n")[1])
@@ -97,8 +99,32 @@ class ListGen(object):
     elif date_diff < 0:
       return "OA"
 
-  def print_runlist(self):
-     print "temp temp temp"
+  def print_runlist(self,filename):
+  #opening file for writing out the final runlist
+  outfile = open(filename,"w")
+  
+  gROUPID = 0
+  for key, value in groups.iteritems():
+    if GROUPID == 0:
+      for l in value:
+        outfile.write( l+"\n" )
+      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
+      outfile.write( key + "\n" )
+      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
+      GROUPID += 1
+    else:
+      outfile.write( "[RUNLIST ID: %s]\n" % (GROUPID) )
+      for l in value:
+        outfile.write( l +"\n")
+      outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
+      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
+      outfile.write( key +"\n")
+      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
+      outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
+      outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
+      GROUPID += 1
+  
+  outfile.close()
 
 def main():
  # Check if an arg is passed and if file exists
@@ -231,31 +257,6 @@ def main():
     else:
       groups[fullConfig] = [run]
   
-  #opening file for writing out the final runlist
-  outfile = open(outname,"w")
-  
-  gROUPID = 0
-  for key, value in groups.iteritems():
-    if GROUPID == 0:
-      for l in value:
-        outfile.write( l+"\n" )
-      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-      outfile.write( key + "\n" )
-      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
-      GROUPID += 1
-    else:
-      outfile.write( "[RUNLIST ID: %s]\n" % (GROUPID) )
-      for l in value:
-        outfile.write( l +"\n")
-      outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
-      outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-      outfile.write( key +"\n")
-      outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
-      outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
-      outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
-      GROUPID += 1
-  
-  outfile.close()
   
 if __name__ = '__main__":
   main()
