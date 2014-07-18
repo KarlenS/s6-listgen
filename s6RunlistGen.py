@@ -26,15 +26,49 @@ import os.path
 class ListGen(object):
 
   def _init_(self, info, query):
-    self.info = info
+    
     self.query = query
 
+    #Dates for array configs
+    self.NA_date = "2009-09-01"
+    self.UA_date = "2012-09-01"
 
-  def runSQL(runID, database, execCMDi, hostName, portNum):
+    #Database information
+    self.hostName = "lucifer1.spa.umn.edu"
+    self.portNum = 33060
 
-    execCMD = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
-    sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D",database, "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
-    QUERY, err1 = sqlOut.communicate()
+  def runSQL(self, execCMD, database):
+    #runs the mysql command provided and returns the output
+    sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly",\ 
+                               "-D","%s" %(database), "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
+    query, err = sqlOut.communicate()
+    return query
+
+  
+  def get_tel_cut_mask(self, query):
+    return query.rstrip().split("\n")[1]
+
+  
+  def get_tel_combo(self, query):
+    CONFIG_MASK = int(query.rstrip().split("\n")[1])
+
+  
+  def get_atm(self, query):
+    MONTH = int(query.rstrip().split("\n")[1])
+
+
+  def get_array_config(self, query1,query2):
+
+    date_diff = int(query1.rstrip().split("\n")[1])
+    date_diff2 = int(query2.rstrip().split("\n")[1])
+    
+    #Choose upgrade, new, or old array
+    if date_diff2 >= 0:
+      return "UA"
+    elif date_diff >= 0:
+      return "NA"
+    elif date_diff < 0:
+      return "OA"
 
 def main():
  # Check if an arg is passed and if file exists
@@ -58,13 +92,7 @@ def main():
   if os.path.isfile(outname):
     os.remove(outname)
   
-  #Database information
-  hostName = "lucifer1.spa.umn.edu"
-  portNum = 33060
   
-  #Dates for array configs
-  nA_date = "2009-09-01"
-  uA_date = "2012-09-01"
   
   #Dictionary to keep track of groups
   groups = {}
@@ -103,21 +131,21 @@ def main():
     QUERY4, err = sqlOut4.communicate()
   
     #parsing through sql results to get needed info
-    TEL_CUT_MASK = QUERY.rstrip().split("\n")[1]
-    DATE_DIFF = int(QUERY2a.rstrip().split("\n")[1])
-    DATE_DIFF2 = int(QUERY2b.rstrip().split("\n")[1])
-    MONTH = int(QUERY3.rstrip().split("\n")[1])
-    CONFIG_MASK = int(QUERY4.rstrip().split("\n")[1])
+    #TEL_CUT_MASK = QUERY.rstrip().split("\n")[1]
+    #DATE_DIFF = int(QUERY2a.rstrip().split("\n")[1])
+    #DATE_DIFF2 = int(QUERY2b.rstrip().split("\n")[1])
+    #MONTH = int(QUERY3.rstrip().split("\n")[1])
+    #CONFIG_MASK = int(QUERY4.rstrip().split("\n")[1])
     
     #print TEL_CUT_MASK,DATE_DIFF,DATE_DIFF2,MONTH,CONFIG_MASK
   
     #Choose upgrade, new, or old array
-    if DATE_DIFF2 >= 0:
-      ARRAY = "UA"
-    elif DATE_DIFF >= 0:
-      ARRAY = "NA"
-    elif DATE_DIFF < 0:
-      ARRAY = "OA"
+    #if DATE_DIFF2 >= 0:
+    #  ARRAY = "UA"
+    #elif DATE_DIFF >= 0:
+    #  ARRAY = "NA"
+    #elif DATE_DIFF < 0:
+    #  ARRAY = "OA"
     
   
     #Choose seasonal tables
