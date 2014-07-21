@@ -130,7 +130,14 @@ class ListGen(object):
     elif date_diff < 0:
       return "OA"
 
+<<<<<<< HEAD
   def print_runlist(self,runs_dict,filename):
+=======
+  def organize_into_groups(self,code): #not sure yet how to best use this
+    
+    
+  def print_runlist(self,filename):
+>>>>>>> 7f1aa393057cafb0dd7ba2484dc7559c1fd6c8f5
   #opening file for writing out the final runlist
     outfile = open(filename,"w")
   
