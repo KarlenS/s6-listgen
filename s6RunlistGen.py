@@ -19,25 +19,26 @@
 
 import subprocess 
 import argparse
-
+import sys
 
 class ListGen(object):
+    
+  #Dates for array configs
+  NA_date = "2009-09-01"
+  UA_date = "2012-09-01"
 
-  def _init_(self, info, query):
+  #Database information
+  hostName = "lucifer1.spa.umn.edu"
+  portNum = 33060
+
+  def _init_(self, query):
     
     self.query = query
 
-    #Dates for array configs
-    self.NA_date = "2009-09-01"
-    self.UA_date = "2012-09-01"
-
-    #Database information
-    self.hostName = "lucifer1.spa.umn.edu"
-    self.portNum = 33060
 
   def runSQL(self, execCMD, database):
     #runs the mysql command provided and returns the output
-    sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly",\ 
+    sqlOut = subprocess.Popen(["mysql","-h","%s" %(self.hostName),"-P","%s" %(self.portNum),"-u", "readonly", 
                                "-D","%s" %(database), "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
     query, err = sqlOut.communicate()
     return query
@@ -47,7 +48,10 @@ class ListGen(object):
     return query.rstrip().split("\n")[1]
 
   
-  def get_tel_combo(self, query):
+  def get_tel_config_mask(self, query):
+    return int(query.rstrip().split("\n")[1])
+
+  def get_tel_combo(self, tel_config_mask):
     
     config_mask_ref={0 : "xxxx",
                      1 : "1xxx",
@@ -67,11 +71,9 @@ class ListGen(object):
                      15 : "1234",
     }
 
-    config_mask = int(query.rstrip().split("\n")[1])
+    return config_mask_ref[tel_config_mask]
 
-    return ref_dict[config_mask]
-
-  def reconcile_tels(self, tel_cut_mask, tel_config_mask):
+  def reconcile_tel_masks(self, tel_cut_mask, tel_config_mask):
     TEL_CUT_REF_T1 = ["1","2","3","4","5","6","7","NULL","0"]
     TEL_CUT_REF_T2 = ["1","2","3","8","9","10","11","NULL","0"]
     TEL_CUT_REF_T3 = ["1","4","5","8","9","12","13","NULL","0"]
@@ -130,18 +132,14 @@ class ListGen(object):
     elif date_diff < 0:
       return "OA"
 
-<<<<<<< HEAD
-  def print_runlist(self,runs_dict,filename):
-=======
-  def organize_into_groups(self,code): #not sure yet how to best use this
+  #def organize_into_groups(self,code): #not sure yet how to best use this
     
     
-  def print_runlist(self,filename):
->>>>>>> 7f1aa393057cafb0dd7ba2484dc7559c1fd6c8f5
+  def print_runlist(self,groups,outfile):
   #opening file for writing out the final runlist
-    outfile = open(filename,"w")
+    #outfile = open(filename,"w")
   
-    gROUPID = 0
+    GROUPID = 0
     for key, value in groups.iteritems():
       if GROUPID == 0:
         for l in value:
@@ -162,19 +160,20 @@ class ListGen(object):
         outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
         GROUPID += 1
   
-    outfile.close()
+    #outfile.close()
 
 def main():
  # Check if an arg is passed and if file exists
 
   parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to input the proper paths to EA files and fill out the Config blocks with desired cuts/configs.')
 
-  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default='s5files.list')
-  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default='s6files.list')
-  
+  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+ 
+  args = parser.parse_args()
   #testing
-  for line in infile.read():
-    print line
+  #for line in args.infile.read():
+  #  print line
 
   #Dictionary to keep track of groups
   groups = {}
@@ -182,9 +181,12 @@ def main():
   
   #mySQL queries
   
-  lines = infile.read().rstrip().split('\n') #temporary - make this nicer too...
+  lines = args.infile.read().rstrip().split('\n') #temporary - make this nicer too...
+  print lines
   #infile.close()
-  
+ 
+  runsobj = ListGen() 
+
   #Loop through file and execute for each run
   for run in lines:
     runID = run[-17:-12]
@@ -195,11 +197,11 @@ def main():
     #sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VOFFLINE", "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
     #QUERY, err1 = sqlOut.communicate()
     
-    execCMD2a = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(NA_date, runID)
+    execCMD2a = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.NA_date, runID)
     #sqlOut2a = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD2a)], stdout=subprocess.PIPE)
     #QUERY2a, err2a = sqlOut2a.communicate()
   
-    execCMD2b = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(UA_date, runID)
+    execCMD2b = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.UA_date, runID)
     #sqlOut2b = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD2b)], stdout=subprocess.PIPE)
     #QUERY2b, err2b = sqlOut2b.communicate()
   
@@ -209,6 +211,24 @@ def main():
     #QUERY3, err = sqlOut3.communicate()
     
     execCMD4 = "select config_mask from tblRun_Info where run_id='%s'" %(runID)
+
+
+    q_tcutmask = runsobj.runSQL(execCMD,'VOFFLINE')
+    #print q
+    tcutmask = runsobj.get_tel_cut_mask(q_tcutmask)
+    #print tcutmask
+
+    q_ddiffNA = runsobj.runSQL(execCMD2a,'VERITAS')
+    q_ddiffUA = runsobj.runSQL(execCMD2b,'VERITAS')
+    ac = runsobj.get_array_config(q_ddiffNA,q_ddiffUA)
+    #print ac
+    q_month = runsobj.runSQL(execCMD3,'VERITAS')
+
+    atm = runsobj.get_atm(q_month)
+    #print atm
+    q_cmask = runsobj.runSQL(execCMD4,'VERITAS')
+    #print q_cmask
+    tconfigmask = runsobj.get_tel_config_mask(q_cmask)
     #sqlOut4 = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD4)], stdout=subprocess.PIPE)
     #QUERY4, err = sqlOut4.communicate()
   
@@ -236,17 +256,16 @@ def main():
     #elif MONTH >= 4 and MONTH <= 10:
     #  SEASON = "ATM22"
   
-    
-    TEL_CUT_MASK = "NULL" 
+     
     #Choose telescope combination
-    if TEL_CUT_MASK == "NULL":
+    if tcutmask == "NULL":
       print "No DQM info exists, using observer reported tel-config"
-      #call run.get_tel_combo(query)
-    
+      telcombo = runsobj.get_tel_combo(tconfigmask)
+      
     #if TEL_CUT_MASK does exist, crosschecking with CONFIG_MASK
-    else:
-      print "hahaha"
-      #print "DQM info available, cross-checking with observer-reported tel config"
+    else:      
+      print "DQM info available, cross-checking with observer-reported tel config"
+      telcombo = runsobj.reconcile_tel_masks(tcutmask, tconfigmask)
       #TEL_CUT_REF_T1 = ["1","2","3","4","5","6","7","NULL","0"]
       #TEL_CUT_REF_T2 = ["1","2","3","8","9","10","11","NULL","0"]
       #TEL_CUT_REF_T3 = ["1","4","5","8","9","12","13","NULL","0"]
@@ -273,14 +292,15 @@ def main():
       #  T4=4
       #  TELTOANA=str(T1)+str(T2)+str(T3)+str(T4)
       
-    #fullConfig = ARRAY + "_"+ SEASON +"_"+ "T" + TELTOANA 
+    fullConfig = ac + "_"+ atm +"_"+ "T" + telcombo 
+    print fullConfig
     #check to see if the group already exists and add run to group
-    fullConfig = "hmmmmm"
     if fullConfig in groups:
       groups[fullConfig].append(run)
     else:
       groups[fullConfig] = [run]
+
+  runsobj.print_runlist(groups,args.outfile)
   
-  
-if __name__ = '__main__":
+if __name__ == '__main__':
   main()
