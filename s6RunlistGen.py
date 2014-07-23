@@ -74,40 +74,48 @@ class ListGen(object):
     return config_mask_ref[tel_config_mask]
 
   def reconcile_tel_masks(self, tel_cut_mask, tel_config_mask):
-    TEL_CUT_REF_T1 = ["1","2","3","4","5","6","7","NULL","0"]
-    TEL_CUT_REF_T2 = ["1","2","3","8","9","10","11","NULL","0"]
-    TEL_CUT_REF_T3 = ["1","4","5","8","9","12","13","NULL","0"]
-    TEL_CUT_REF_T4 = ["2","4","6","8","10","12","14","NULL","0"]
+    tel_cut_ref_T1 = ["1","2","3","4","5","6","7","NULL","0"]
+    tel_cut_ref_T2 = ["1","2","3","8","9","10","11","NULL","0"]
+    tel_cut_ref_T3 = ["1","4","5","8","9","12","13","NULL","0"]
+    tel_cut_ref_T4 = ["2","4","6","8","10","12","14","NULL","0"]
   
-    CONFIG_REF_T1 = [1,3,5,7,9,11,13,15]
-    CONFIG_REF_T2 = [2,3,6,7,10,11,14,15]
-    CONFIG_REF_T3 = [4,5,6,7,12,13,14,15]
-    CONFIG_REF_T4 = [8,9,10,11,12,13,14,15]
+    config_ref_T1 = [1,3,5,7,9,11,13,15]
+    config_ref_T2 = [2,3,6,7,10,11,14,15]
+    config_ref_T3 = [4,5,6,7,12,13,14,15]
+    config_ref_T4 = [8,9,10,11,12,13,14,15]
       
-    TELTOANA = ""
+    tel_config = ""
     T1 = "x"
     T2 = "x"
     T3 = "x"
     T4 = "x"
 
-    if str(TEL_CUT_MASK) in TEL_CUT_REF_T1 and CONFIG_MASK in CONFIG_REF_T1:
+    if str(tel_cut_mask) in tel_cut_ref_T1 and tel_config_mask in config_ref_T1:
       T1=1
-      TELTOANA = str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config = str(T1)+str(T2)+str(T3)+str(T4)
       
-    if str(TEL_CUT_MASK) in TEL_CUT_REF_T2 and CONFIG_MASK in CONFIG_REF_T2:
+    if str(tel_cut_mask) in tel_cut_ref_T2 and tel_config_mask in config_ref_T2:
       T2=2
-      TELTOANA=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
       
-    if str(TEL_CUT_MASK) in TEL_CUT_REF_T3 and CONFIG_MASK in CONFIG_REF_T3:
+    if str(tel_cut_mask) in tel_cut_ref_T3 and tel_config_mask in config_ref_T3:
       T3=3
-      TELTOANA=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
       
-    if str(TEL_CUT_MASK) in TEL_CUT_REF_T4 and CONFIG_MASK in CONFIG_REF_T4:
+    if str(tel_cut_mask) in tel_cut_ref_T4 and tel_config_mask in config_ref_T4:
       T4=4
-      TELTOANA=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
 
-    return TELTOANA
+    return tel_config
 
+  #def get_atm(self, query):
+  #
+  #  month = int(query.rstrip().split("\n")[1])
+  #
+  #  if month <= 3 or month >= 11:
+  #    return "ATM21"
+  #  elif month >= 4 and month <= 10:
+  #    return "ATM22"
     
   def get_atm(self, query):
 
@@ -121,15 +129,15 @@ class ListGen(object):
 
   def get_array_config(self, query1,query2):
 
-    date_diff = int(query1.rstrip().split("\n")[1])
-    date_diff2 = int(query2.rstrip().split("\n")[1])
+    date_diff_NA = int(query1.rstrip().split("\n")[1])
+    date_diff_UA = int(query2.rstrip().split("\n")[1])
     
     #Choose upgrade, new, or old array
-    if date_diff2 >= 0:
+    if date_diff_UA >= 0:
       return "UA"
-    elif date_diff >= 0:
+    elif date_diff_NA >= 0:
       return "NA"
-    elif date_diff < 0:
+    elif date_diff_NA < 0:
       return "OA"
 
   #def organize_into_groups(self,code): #not sure yet how to best use this
@@ -182,7 +190,7 @@ def main():
   #mySQL queries
   
   lines = args.infile.read().rstrip().split('\n') #temporary - make this nicer too...
-  print lines
+  #print lines
   #infile.close()
  
   runsobj = ListGen() 
@@ -193,36 +201,39 @@ def main():
     print "Querying",runID, "..."
   
     #Do mySQL queries through command line, using subprocess module
-    execCMD = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
+    execCMD_TCM = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
     #sqlOut = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VOFFLINE", "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
     #QUERY, err1 = sqlOut.communicate()
     
-    execCMD2a = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.NA_date, runID)
+    execCMD_NAdiff = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.NA_date, runID)
     #sqlOut2a = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD2a)], stdout=subprocess.PIPE)
     #QUERY2a, err2a = sqlOut2a.communicate()
   
-    execCMD2b = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.UA_date, runID)
+    execCMD_UAdiff = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.UA_date, runID)
     #sqlOut2b = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD2b)], stdout=subprocess.PIPE)
     #QUERY2b, err2b = sqlOut2b.communicate()
   
     
-    execCMD3 = "select MONTH(data_start_time) from tblRun_Info where run_id='%s'" %(runID)
+    execCMD_month = "select MONTH(data_start_time) from tblRun_Info where run_id='%s'" %(runID)
+    
+    #execCMD_date = "select MONTH(data_start_time),DAY(data_start_time) from tblRun_Info where run_id='%s'" %(runID)
+    
     #sqlOut3 = subprocess.Popen(["mysql","-h","%s" %(hostName),"-P","%s" %(portNum),"-u", "readonly", "-D","VERITAS", "--execute=%s" %(execCMD3)], stdout=subprocess.PIPE)
     #QUERY3, err = sqlOut3.communicate()
     
     execCMD4 = "select config_mask from tblRun_Info where run_id='%s'" %(runID)
 
 
-    q_tcutmask = runsobj.runSQL(execCMD,'VOFFLINE')
+    q_tcutmask = runsobj.runSQL(execCMD_TCM,'VOFFLINE')
     #print q
     tcutmask = runsobj.get_tel_cut_mask(q_tcutmask)
     #print tcutmask
 
-    q_ddiffNA = runsobj.runSQL(execCMD2a,'VERITAS')
-    q_ddiffUA = runsobj.runSQL(execCMD2b,'VERITAS')
+    q_ddiffNA = runsobj.runSQL(execCMD_NAdiff,'VERITAS')
+    q_ddiffUA = runsobj.runSQL(execCMD_UAdiff,'VERITAS')
     ac = runsobj.get_array_config(q_ddiffNA,q_ddiffUA)
     #print ac
-    q_month = runsobj.runSQL(execCMD3,'VERITAS')
+    q_month = runsobj.runSQL(execCMD_month,'VERITAS')
 
     atm = runsobj.get_atm(q_month)
     #print atm
@@ -293,7 +304,7 @@ def main():
       #  TELTOANA=str(T1)+str(T2)+str(T3)+str(T4)
       
     fullConfig = ac + "_"+ atm +"_"+ "T" + telcombo 
-    print fullConfig
+    #print fullConfig
     #check to see if the group already exists and add run to group
     if fullConfig in groups:
       groups[fullConfig].append(run)
