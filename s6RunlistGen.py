@@ -14,7 +14,7 @@
 #
 # Format assumed for stage 5 files is /path/to/file/<RUN ID>.stage5.root
 #
-# Winter atmosphere (ATM21) is from November to March
+# Winter atmosphere (ATM21) is from November through March
 # Summer atmosphere (ATM22) is from April to October
 
 import subprocess 
@@ -31,29 +31,29 @@ class ListGen(object):
   hostName = "lucifer1.spa.umn.edu"
   portNum = 33060
 
-  def _init_(self, query):
+  def __init__(self):
     
-    self.query = query
-
+    #define months for ATM21/ATM22 distinction
+    self.spring_cutoff = 3  #ATM21 goes through this month 
+    self.fall_cutoff = 11   #ATM22 goes up to this month (not including)
 
   def runSQL(self, execCMD, database):
     #runs the mysql command provided and returns the output list of results
     sqlOut = subprocess.Popen(["mysql","-h","%s" %(self.hostName),"-P","%s" %(self.portNum),"-u", "readonly", 
                                "-D","%s" %(database), "--execute=%s" %(execCMD)], stdout=subprocess.PIPE)
     query, err = sqlOut.communicate()
-    return query
-    #return query.rstrip().split("\n")[1]
+    #return query
+    return query.rstrip().split("\n")[1]
 
   
   def get_tel_cut_mask(self, query):
     #parses query output for tel_cut_mask
-    return query.rstrip().split("\n")[1]
+    return query
 
   
   def get_tel_config_mask(self, query):
     #parses query output for config_mask
-    return int(query.rstrip().split("\n")[1])
-    #return int(query.split("\t")[4]
+    return int(query.split("\t")[4])
 
   def get_tel_combo(self, tel_config_mask):
     #uses config mask to determine telescope participation
@@ -118,24 +118,19 @@ class ListGen(object):
 
   def get_atm(self, query):
     #parses query result for month (day) and returns appropriate ATM (21 or 22)
-    month = int(query.rstrip().split("\n")[1])
-    #month = int(query.split("\t")[0])
-    #day = int(query.split("\t")[1])
+    month = int(query.split("\t")[0])
+    day = int(query.split("\t")[1]) #can define division for a specific day of month
 
-    if month <= 3 or month >= 11:
+    if month <= self.spring_cutoff or month >= self.fall_cutoff:
       return "ATM21"
-    elif month >= 4 and month <= 10:
+    else:
       return "ATM22"
 
-
-  def get_array_config(self, query1,query2):
-  #def get_array_config(self, query):
+  def get_array_config(self, query):
     #parses query result for difference between run date & NA
     #and run date & UA and returns array config (OA, NA, or UA)
-    date_diff_NA = int(query1.rstrip().split("\n")[1])
-    date_diff_UA = int(query2.rstrip().split("\n")[1])
-    #date_diff_NA = int(query.split("\n")[2])
-    #date_diff_UA = int(query.split("\n")[3])
+    date_diff_NA = int(query.split("\t")[2])
+    date_diff_UA = int(query.split("\t")[3])
     
     #Choose upgrade, new, or old array
     if date_diff_UA >= 0:
@@ -149,21 +144,27 @@ class ListGen(object):
     #takes dictionary of run groups and output file and
     #prints them according to the format required by v2.5.1+
     GROUPID = 0
-    for key, value in groups.iteritems():
+    for config_code, group_runs in groups.iteritems():
+      #handles first group that requires special formatting(not printing config)
       if GROUPID == 0:
-        for l in value:
+        for l in group_runs:
           outfile.write( l+"\n" )
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-        outfile.write( key + "\n" )
+        outfile.write( config_code + "\n" )
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         GROUPID += 1
+      #for all other groups
       else:
         outfile.write( "[RUNLIST ID: %s]\n" % (GROUPID) )
-        for l in value:
+        for l in group_runs:
           outfile.write( l +"\n")
         outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
+        #prints out Effective Area blocks for each group
+        #currently, it writes codes for EA file, which then
+        #need to be replaced by the full EA paths
+        #ADD AUTOMATCHING FUNCTIONALITY
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-        outfile.write( key +"\n")
+        outfile.write( config_code +"\n")
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
         outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
@@ -194,29 +195,17 @@ def main():
     #Do mySQL queries through command line, using subprocess module 
     execCMD_TCM = "select tel_cut_mask from tblRun_Analysis_Comments where run_id='%s'" %(runID)
     
-    execCMD_NAdiff = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.NA_date, runID)
-  
-    execCMD_UAdiff = "select DATEDIFF(data_start_time,'%s') from tblRun_Info where run_id='%s'" %(runsobj.UA_date, runID)
-    
-    execCMD_month = "select MONTH(data_start_time) from tblRun_Info where run_id='%s'" %(runID)
-    
-    execCMD_CM = "select config_mask from tblRun_Info where run_id='%s'" %(runID)
-    #the 4 above can be replaced by the one below
-    #execCMD = "select MONTH(data_start_time),DAY(data_start_time),DATEDIFF(data_start_time,'%s'),DATEDIFF(data_start_time,'%s'),config_mask from tblRun_Info where run_id='%s'" %(runsobj.NA_date,runsobj.UA_date,runID)
+    execCMD_all = "select MONTH(data_start_time),DAY(data_start_time),DATEDIFF(data_start_time,'%s'),DATEDIFF(data_start_time,'%s'),config_mask from tblRun_Info where run_id='%s'" %(runsobj.NA_date,runsobj.UA_date,runID)
     
     #Retrieve query results
     q_tcutmask = runsobj.runSQL(execCMD_TCM,'VOFFLINE')
-    q_ddiffNA = runsobj.runSQL(execCMD_NAdiff,'VERITAS')
-    q_ddiffUA = runsobj.runSQL(execCMD_UAdiff,'VERITAS')
-    q_month = runsobj.runSQL(execCMD_month,'VERITAS')
-    q_cmask = runsobj.runSQL(execCMD_CM,'VERITAS')
+    q_all = runsobj.runSQL(execCMD_all,'VERITAS')
     
     #use query results to determine parameters required for grouping runs
     tcutmask = runsobj.get_tel_cut_mask(q_tcutmask)
-    ac = runsobj.get_array_config(q_ddiffNA,q_ddiffUA)
-    atm = runsobj.get_atm(q_month)
-    tconfigmask = runsobj.get_tel_config_mask(q_cmask)
-
+    ac = runsobj.get_array_config(q_all)
+    atm = runsobj.get_atm(q_all)
+    tconfigmask = runsobj.get_tel_config_mask(q_all)
   
     #Choose telescope combination
     if tcutmask == "NULL":
@@ -227,7 +216,6 @@ def main():
       print "DQM info available, cross-checking with observer-reported tel config"
       telcombo = runsobj.reconcile_tel_masks(tcutmask, tconfigmask)
     
-    #q_date = runsobj.runSQL(execCMD_date,'VERITAS')
     
     #combined configuration code for identifying runs with groups
     fullConfig = ac + "_"+ atm +"_"+ "T" + telcombo 
