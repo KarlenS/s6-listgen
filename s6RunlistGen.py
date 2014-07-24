@@ -31,11 +31,16 @@ class ListGen(object):
   hostName = "lucifer1.spa.umn.edu"
   portNum = 33060
 
+  EA_file_dir = "/data/lucifer1.1/veritas/lookups/vegas/v2_5_0/ea/"
+  
+  matchEA = True
+
   def __init__(self):
     
     #define months for ATM21/ATM22 distinction
     self.spring_cutoff = 3  #ATM21 goes through this month 
     self.fall_cutoff = 11   #ATM22 goes up to this month (not including)
+
 
   def runSQL(self, execCMD, database):
     #runs the mysql command provided and returns the output list of results
@@ -140,17 +145,53 @@ class ListGen(object):
     elif date_diff_NA < 0:
       return "OA"
 
+  def get_EA_file(self, EA_config, cuts):
+    
+    EA_choices = { "UA_ATM22_T1234" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM22_Tx234" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM22_T1x34" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM22_T12x4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM22_T123x" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM21_T1234" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM21_Tx234" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM21_T1x34" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM21_T12x4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "UA_ATM21_T123x" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM22_T1234" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM22_Tx234" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM22_T1x34" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM22_T12x4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM22_T123x" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM21_T1234" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM21_Tx234" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM21_T1x34" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM21_T12x4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "NA_ATM21_T123x" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "OA_ATM22_T1234" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
+                   "OA_ATM22_Tx234" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root", 
+                   "OA_ATM22_T1x34" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
+                   "OA_ATM22_T12x4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
+                   "OA_ATM22_T123x" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
+                   "OA_ATM21_T1234" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "OA_ATM21_Tx234" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "OA_ATM21_T1x34" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "OA_ATM21_T12x4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "OA_ATM21_T123x" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   }
+
+    return EA_choices[EA_config]
+
   def print_runlist(self,groups,outfile):
     #takes dictionary of run groups and output file and
     #prints them according to the format required by v2.5.1+
     GROUPID = 0
-    for config_code, group_runs in groups.iteritems():
+    for EA_config, group_runs in groups.iteritems():
       #handles first group that requires special formatting(not printing config)
       if GROUPID == 0:
         for l in group_runs:
           outfile.write( l+"\n" )
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-        outfile.write( config_code + "\n" )
+        outfile.write( EA_config + "\n" )
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         GROUPID += 1
       #for all other groups
@@ -163,8 +204,9 @@ class ListGen(object):
         #currently, it writes codes for EA file, which then
         #need to be replaced by the full EA paths
         #ADD AUTOMATCHING FUNCTIONALITY
+        if matchEA : EA_config = EA_file_dir + self.get_EA_file(EA_config,'med')
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-        outfile.write( config_code +"\n")
+        outfile.write( EA_config +"\n")
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         outfile.write( "[CONFIG ID: %s]\n" % (GROUPID) )
         outfile.write( "[/CONFIG ID: %s]\n" % (GROUPID) )
@@ -174,8 +216,9 @@ def main():
 
   #parsing arguments
   parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to input the proper paths to EA files and fill out the Config blocks with desired cuts/configs.')
-  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
-  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout) 
+  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="Input file name with list of stage5 root files, containing paths to the files")
+  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="Output file name written out with the properly formatted runlist") 
+  parser.add_argument('--cuts', nargs='?', default='med', help="Takes either 'med' or 'soft' for medium or soft analysis") 
   args = parser.parse_args()
 
   #Define a ListGen object
