@@ -31,16 +31,13 @@ class ListGen(object):
   hostName = "lucifer1.spa.umn.edu"
   portNum = 33060
 
-  EA_file_dir = "/data/lucifer1.1/veritas/lookups/vegas/v2_5_0/ea/"
-  
-  matchEA = True
-
   def __init__(self):
     
     #define months for ATM21/ATM22 distinction
     self.spring_cutoff = 3  #ATM21 goes through this month 
     self.fall_cutoff = 11   #ATM22 goes up to this month (not including)
-
+    self.matchEA = True
+    self.EA_file_dir = "/data/lucifer1.1/veritas/lookups/vegas/v2_5_0/ea/"  
 
   def runSQL(self, execCMD, database):
     #runs the mysql command provided and returns the output list of results
@@ -62,22 +59,22 @@ class ListGen(object):
 
   def get_tel_combo(self, tel_config_mask):
     #uses config mask to determine telescope participation
-    config_mask_ref={0 : "xxxx",
-                     1 : "1xxx",
-                     2 : "x2xx",
-                     3 : "12xx",
-                     4 : "xx3x",
-                     5 : "1x3x",
-                     6 : "x23x",
-                     7 : "123x",
-                     8 : "xxx4",
-                     9 : "1xx4",
-                     10 : "x2x4",
-                     11 : "12x4",
-                     12 : "xx34",
-                     13 : "1x34",
-                     14 : "x234",
-                     15 : "1234",
+    config_mask_ref={0 : "_xxxx",
+                     1 : "_T1",
+                     2 : "_T2",
+                     3 : "_T1T2",
+                     4 : "_T3",
+                     5 : "_T1T3",
+                     6 : "_T2T3",
+                     7 : "_T1T2T3",
+                     8 : "_T4",
+                     9 : "_T1T4",
+                     10 : "_T2T4",
+                     11 : "_T1T2T4",
+                     12 : "_T3T4",
+                     13 : "_T1T3T4",
+                     14 : "_T2T3T4",
+                     15 : "",
     }
 
     return config_mask_ref[tel_config_mask]
@@ -96,27 +93,30 @@ class ListGen(object):
     config_ref_T3 = [4,5,6,7,12,13,14,15]
     config_ref_T4 = [8,9,10,11,12,13,14,15]
       
-    tel_config = ""
-    T1 = "x"
-    T2 = "x"
-    T3 = "x"
-    T4 = "x"
+    tel_config = "_"
+    T1 = ""
+    T2 = ""
+    T3 = ""
+    T4 = ""
 
     if str(tel_cut_mask) in tel_cut_ref_T1 and tel_config_mask in config_ref_T1:
-      T1=1
+      T1="T1"
       tel_config = str(T1)+str(T2)+str(T3)+str(T4)
       
     if str(tel_cut_mask) in tel_cut_ref_T2 and tel_config_mask in config_ref_T2:
-      T2=2
+      T2="T2"
       tel_config=str(T1)+str(T2)+str(T3)+str(T4)
       
     if str(tel_cut_mask) in tel_cut_ref_T3 and tel_config_mask in config_ref_T3:
-      T3=3
+      T3="T3"
       tel_config=str(T1)+str(T2)+str(T3)+str(T4)
       
     if str(tel_cut_mask) in tel_cut_ref_T4 and tel_config_mask in config_ref_T4:
-      T4=4
+      T4="T4"
       tel_config=str(T1)+str(T2)+str(T3)+str(T4)
+
+    if (tel_config == "_T1T2T3T4"):
+      tel_config = ""
 
     return tel_config
 
@@ -127,9 +127,9 @@ class ListGen(object):
     day = int(query.split("\t")[1]) #can define division for a specific day of month
 
     if month <= self.spring_cutoff or month >= self.fall_cutoff:
-      return "ATM21"
+      return "_ATM21"
     else:
-      return "ATM22"
+      return "_ATM22"
 
   def get_array_config(self, query):
     #parses query result for difference between run date & NA
@@ -139,44 +139,53 @@ class ListGen(object):
     
     #Choose upgrade, new, or old array
     if date_diff_UA >= 0:
-      return "UA"
+      return "ua"
     elif date_diff_NA >= 0:
-      return "NA"
+      return "na"
     elif date_diff_NA < 0:
-      return "OA"
+      return "oa"
 
   def get_EA_file(self, EA_config, cuts):
     
-    EA_choices = { "UA_ATM22_T1234" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM22_Tx234" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM22_T1x34" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM22_T12x4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM22_T123x" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM21_T1234" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM21_Tx234" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM21_T1x34" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM21_T12x4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "UA_ATM21_T123x" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM22_T1234" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM22_Tx234" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM22_T1x34" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM22_T12x4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM22_T123x" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM21_T1234" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM21_Tx234" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM21_T1x34" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM21_T12x4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "NA_ATM21_T123x" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "OA_ATM22_T1234" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
-                   "OA_ATM22_Tx234" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root", 
-                   "OA_ATM22_T1x34" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
-                   "OA_ATM22_T12x4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
-                   "OA_ATM22_T123x" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_050off_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root",
-                   "OA_ATM21_T1234" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "OA_ATM21_Tx234" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "OA_ATM21_T1x34" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "OA_ATM21_T12x4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "OA_ATM21_T123x" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+    simType = "ea"
+    simDate = "_Oct2012"
+    simPars = "_7sam_Alloff"
+    cuts = "_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01"
+    
+    #config = "_" + EA_config[0:8]
+    #tel = EA_config[9:]
+    vegasv = "vegasv250rc5_"
+
+    EA_choices = { "ua_ATM22" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM22_T2T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM22_T1T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM22_T1T2T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM22_T1T2T3" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21_T2T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21_T1T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21_T1T2T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21_T1T2T3" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22_T2T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22_T1T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22_T1T2T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22_T1T2T3" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21_T2T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21_T1T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21_T1T2T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21_T1T2T3" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM22" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root_LZA",
+                   "oa_ATM22_T2T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root", 
+                   "oa_ATM22_T1T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM22_T1T2T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM22_T1T2T3" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21_T2T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21_T1T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21_T1T2T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21_T1T2T3" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    }
 
     return EA_choices[EA_config]
@@ -191,6 +200,7 @@ class ListGen(object):
         for l in group_runs:
           outfile.write( l+"\n" )
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
+        if self.matchEA: EA_config = self.EA_file_dir + self.get_EA_file(EA_config,'med')
         outfile.write( EA_config + "\n" )
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         GROUPID += 1
@@ -204,7 +214,7 @@ class ListGen(object):
         #currently, it writes codes for EA file, which then
         #need to be replaced by the full EA paths
         #ADD AUTOMATCHING FUNCTIONALITY
-        if matchEA : EA_config = EA_file_dir + self.get_EA_file(EA_config,'med')
+        if self.matchEA: EA_config = self.EA_file_dir + self.get_EA_file(EA_config,'med')
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
         outfile.write( EA_config +"\n")
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
@@ -261,7 +271,7 @@ def main():
     
     
     #combined configuration code for identifying runs with groups
-    fullConfig = ac + "_"+ atm +"_"+ "T" + telcombo 
+    fullConfig = ac + atm + telcombo 
     
     #check to see if a group already exists for a given config and add run to group
     #otherwise, create a new group and add run to group
