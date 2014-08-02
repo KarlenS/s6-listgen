@@ -101,19 +101,35 @@ class ListGen(object):
 
     if str(tel_cut_mask) in tel_cut_ref_T1 and tel_config_mask in config_ref_T1:
       T1="T1"
-      tel_config = str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+    elif str(tel_cut_mask) in tel_cut_ref_T1 or tel_config_mask in config_ref_T1:
+      print "DQM and observer reported telescope participation info do not match!"
+      print "Using observer-reported info."
+      get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T2 and tel_config_mask in config_ref_T2:
       T2="T2"
-      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+    elif str(tel_cut_mask) in tel_cut_ref_T2 or tel_config_mask in config_ref_T2:
+      print "DQM and observer reported telescope participation info do not match!"
+      print "Using observer-reported info."
+      get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T3 and tel_config_mask in config_ref_T3:
       T3="T3"
-      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+    elif str(tel_cut_mask) in tel_cut_ref_T3 or tel_config_mask in config_ref_T3:
+      print "DQM and observer reported telescope participation info do not match!"
+      print "Using observer-reported info."
+      get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T4 and tel_config_mask in config_ref_T4:
       T4="T4"
-      tel_config=str(T1)+str(T2)+str(T3)+str(T4)
+      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+    elif str(tel_cut_mask) in tel_cut_ref_T4 or tel_config_mask in config_ref_T4:
+      print "DQM and observer reported telescope participation info do not match!"
+      print "Using observer-reported info."
+      get_tel_combo(tel_config_mask)
 
     if (tel_config == "_T1T2T3T4"):
       tel_config = ""
@@ -146,15 +162,17 @@ class ListGen(object):
       return "oa"
 
   def get_EA_file(self, EA_config, cuts):
-    
-    simType = "ea"
-    simDate = "_Oct2012"
-    simPars = "_7sam_Alloff"
-    cuts = "_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01"
+    #No 3-tel, non-HFit tables so using 4 tel - creating these as we go
+    #simType = "ea"
+    #simDate = "_Oct2012"
+    #simPars = "_7sam"
+    #simOff = "_Alloff"
+    #lza = "_LZA"
+    #cuts = "_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01"
     
     #config = "_" + EA_config[0:8]
     #tel = EA_config[9:]
-    vegasv = "vegasv250rc5_"
+    #vegasv = "vegasv250rc5_"
 
     EA_choices = { "ua_ATM22" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "ua_ATM22_T2T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
@@ -165,7 +183,7 @@ class ListGen(object):
                    "ua_ATM21_T2T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "ua_ATM21_T1T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "ua_ATM21_T1T2T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "ua_ATM21_T1T2T3" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM21_T1T2T3" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_050wobb_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T2T3.root",
                    "na_ATM22" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "na_ATM22_T2T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "na_ATM22_T1T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
