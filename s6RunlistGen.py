@@ -36,6 +36,7 @@ class ListGen(object):
     #define months for ATM21/ATM22 distinction
     self.spring_cutoff = 3  #ATM21 goes through this month 
     self.fall_cutoff = 11   #ATM22 goes up to this month (not including)
+    self.day_cutoff = 15 # day of month for dividing ATM21/ATM22
     self.matchEA = True
     self.EA_file_dir = "/data/lucifer1.1/veritas/lookups/vegas/v2_5_0/ea/"  
 
@@ -59,21 +60,21 @@ class ListGen(object):
 
   def get_tel_combo(self, tel_config_mask):
     #uses config mask to determine telescope participation
-    config_mask_ref={0 : "_xxxx",
-                     1 : "_T1",
-                     2 : "_T2",
-                     3 : "_T1T2",
-                     4 : "_T3",
-                     5 : "_T1T3",
-                     6 : "_T2T3",
-                     7 : "_T1T2T3",
-                     8 : "_T4",
-                     9 : "_T1T4",
-                     10 : "_T2T4",
-                     11 : "_T1T2T4",
-                     12 : "_T3T4",
-                     13 : "_T1T3T4",
-                     14 : "_T2T3T4",
+    config_mask_ref={0 : "",
+                     1 : "_1---",
+                     2 : "_-2--",
+                     3 : "_12--",
+                     4 : "_--3-",
+                     5 : "_1-3-",
+                     6 : "_-23-",
+                     7 : "_123-",
+                     8 : "_---4",
+                     9 : "_1--4",
+                     10 : "_-2-4",
+                     11 : "_12-4",
+                     12 : "_--34",
+                     13 : "_1-34",
+                     14 : "_-234",
                      15 : "",
     }
 
@@ -82,7 +83,6 @@ class ListGen(object):
   def reconcile_tel_masks(self, tel_cut_mask, tel_config_mask):
     #when tel_cut_mask is present, checks it against tel_config_mask
     #and returns the result
-    #!!! the case where the two do not match is not handled !!!
     tel_cut_ref_T1 = ["1","2","3","4","5","6","7","NULL","0"]
     tel_cut_ref_T2 = ["1","2","3","8","9","10","11","NULL","0"]
     tel_cut_ref_T3 = ["1","4","5","8","9","12","13","NULL","0"]
@@ -94,44 +94,44 @@ class ListGen(object):
     config_ref_T4 = [8,9,10,11,12,13,14,15]
       
     tel_config = "_"
-    T1 = ""
-    T2 = ""
-    T3 = ""
-    T4 = ""
+    T1 = "-"
+    T2 = "-"
+    T3 = "-"
+    T4 = "-"
 
     if str(tel_cut_mask) in tel_cut_ref_T1 and tel_config_mask in config_ref_T1:
-      T1="T1"
-      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+      T1="1"
+      tel_config += str(T1)
     elif str(tel_cut_mask) in tel_cut_ref_T1 or tel_config_mask in config_ref_T1:
       print "DQM and observer reported telescope participation info do not match!"
       print "Using observer-reported info."
       get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T2 and tel_config_mask in config_ref_T2:
-      T2="T2"
-      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+      T2="2"
+      tel_config += str(T2)
     elif str(tel_cut_mask) in tel_cut_ref_T2 or tel_config_mask in config_ref_T2:
       print "DQM and observer reported telescope participation info do not match!"
       print "Using observer-reported info."
       get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T3 and tel_config_mask in config_ref_T3:
-      T3="T3"
-      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+      T3="3"
+      tel_config += str(T3)
     elif str(tel_cut_mask) in tel_cut_ref_T3 or tel_config_mask in config_ref_T3:
       print "DQM and observer reported telescope participation info do not match!"
       print "Using observer-reported info."
       get_tel_combo(tel_config_mask)
       
     if str(tel_cut_mask) in tel_cut_ref_T4 and tel_config_mask in config_ref_T4:
-      T4="T4"
-      tel_config += str(T1)+str(T2)+str(T3)+str(T4)
+      T4="4"
+      tel_config += str(T4)
     elif str(tel_cut_mask) in tel_cut_ref_T4 or tel_config_mask in config_ref_T4:
       print "DQM and observer reported telescope participation info do not match!"
       print "Using observer-reported info."
       get_tel_combo(tel_config_mask)
 
-    if (tel_config == "_T1T2T3T4"):
+    if (tel_config == "_1234"):
       tel_config = ""
 
     return tel_config
@@ -142,7 +142,8 @@ class ListGen(object):
     month = int(query.split("\t")[0])
     day = int(query.split("\t")[1]) #can define division for a specific day of month
 
-    if month <= self.spring_cutoff or month >= self.fall_cutoff:
+    print "date ",month, day
+    if (month <= self.spring_cutoff and day <=self.day_cutoff) or (month >= self.fall_cutoff and day >= self.day_cutoff):
       return "_ATM21"
     else:
       return "_ATM22"
@@ -175,35 +176,55 @@ class ListGen(object):
     #vegasv = "vegasv250rc5_"
 
     EA_choices = { "ua_ATM22" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "ua_ATM22_T2T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "ua_ATM22_T1T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "ua_ATM22_T1T2T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "ua_ATM22_T1T2T3" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "ua_ATM22_T2T3T4" : "ua_ATM22_T2T3T4",
+                   "ua_ATM22_T1T3T4" : "ua_ATM22_T1T3T4",
+                   "ua_ATM22_T1T2T4" : "ua_ATM22_T1T2T4",
+                   "ua_ATM22_T1T2T3" : "ua_ATM22_T1T2T3",
+                   #"ua_ATM22_T2T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"ua_ATM22_T1T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"ua_ATM22_T1T2T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"ua_ATM22_T1T2T3" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "ua_ATM21" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "ua_ATM21_T2T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_050wobb_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T2T3T4.root",
                    "ua_ATM21_T1T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_050wobb_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T3T4.root",
                    "ua_ATM21_T1T2T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_allOffsets_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T2T4_LZA.root",
                    "ua_ATM21_T1T2T3" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_allOffsets_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T2T3_LZA.root",
                    "na_ATM22" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM22_T2T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM22_T1T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM22_T1T2T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM22_T1T2T3" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM22_T2T3T4" : "na_ATM22_T2T3T4",
+                   "na_ATM22_T1T3T4" : "na_ATM22_T1T3T4",
+                   "na_ATM22_T1T2T4" : "na_ATM22_T1T2T4",
+                   "na_ATM22_T1T2T3" : "na_ATM22_T1T2T3",
+                   #"na_ATM22_T2T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM22_T1T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM22_T1T2T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM22_T1T2T3" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "na_ATM21" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM21_T2T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM21_T1T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM21_T1T2T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "na_ATM21_T1T2T3" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "na_ATM21_T2T3T4" : "na_ATM21_T2T3T4",
+                   "na_ATM21_T1T3T4" : "na_ATM21_T1T3T4",
+                   "na_ATM21_T1T2T4" : "na_ATM21_T1T2T4",
+                   "na_ATM21_T1T2T3" : "na_ATM21_T1T2T3",
+                   #"na_ATM21_T2T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM21_T1T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM21_T1T2T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"na_ATM21_T1T2T3" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "oa_ATM22" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01.root_LZA",
-                   "oa_ATM22_T2T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root", 
-                   "oa_ATM22_T1T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM22_T1T2T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM22_T1T2T3" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM22_T2T3T4" : "oa_ATM22_T2T3T4",
+                   "oa_ATM22_T1T3T4" : "oa_ATM22_T1T3T4",
+                   "oa_ATM22_T1T2T4" : "oa_ATM22_T1T2T4",
+                   "oa_ATM22_T1T2T3" : "oa_ATM22_T1T2T3",
+                   #"oa_ATM22_T2T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root", 
+                   #"oa_ATM22_T1T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"oa_ATM22_T1T2T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"oa_ATM22_T1T2T3" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    "oa_ATM21" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM21_T2T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM21_T1T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM21_T1T2T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "oa_ATM21_T1T2T3" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   "oa_ATM21_T2T3T4" : "oa_ATM21_T2T3T4",
+                   "oa_ATM21_T1T3T4" : "oa_ATM21_T1T3T4",
+                   "oa_ATM21_T1T2T4" : "oa_ATM21_T1T2T4",
+                   "oa_ATM21_T1T2T3" : "oa_ATM21_T1T2T3",
+                   #"oa_ATM21_T2T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"oa_ATM21_T1T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"oa_ATM21_T1T2T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
+                   #"oa_ATM21_T1T2T3" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
                    }
 
     return EA_choices[EA_config]
@@ -293,6 +314,7 @@ def main():
     
     #check to see if a group already exists for a given config and add run to group
     #otherwise, create a new group and add run to group
+    print fullConfig
     if fullConfig in groups:
       groups[fullConfig].append(run)
     else:
