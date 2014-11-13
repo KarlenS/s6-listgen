@@ -1,21 +1,32 @@
 #!/usr/bin/python
 
-# Script to convert list of stage 5 files to the format required by stage6 in vegas 2.5
+# author: Karlen Shahinyan
+# email: shahin@astro.umn.edu
+# last updated: 11/12/14
+#
+# This is a script to convert list of stage 5 files to the format required by stage6 in vegas 2.5
 # The first argument is the stage 5 run list file.
 # The second argument is the reformatted output file.
 #
+# For info & listing of all arguments/options use:
+# python s6RunlistGen.py --help 
+#
 # The script only identifies the number of tels, na/oa, and summer/winter.
-# The user must still match up EA tags with the real
-# EA files. The script doesn't know where you keep your set of EAs.
-# The script also doesn't know about things like soft/med/hard or H vs HFit.  
+#
+# There is now an automated EA path/filename generation option --EAmatch (based on standard convention).
+# When enabled, the script will take user specifiable command-line values (default if not specified)
+# for all other parameters required for generating EA filenames.
 #
 # Contents of CONFIG blocks of each group are left blank. The user should add the desired
 # cuts or configs (e.g., S6A_RingSize 0.17)
 #
 # Format assumed for stage 5 files is /path/to/file/<RUN ID>.stage5.root
 #
-# Winter atmosphere (ATM21) is from November through March
-# Summer atmosphere (ATM22) is from April to October
+# Winter atmosphere (ATM21) is from mid November through mid March
+# Summer atmosphere (ATM22) is from mid March through mid November
+#
+# The script does not currently support HFit EA filename generation
+# nor does it differentiate between normal runs & reducedHV/filter runs (but will very soon)
 
 import subprocess 
 import argparse
@@ -28,8 +39,8 @@ class ListGen(object):
   UA_date = "2012-09-01"
 
   #Database information
-  hostName = "lucifer1.spa.umn.edu"
-  portNum = 33060
+  hostName = "romulus.ucsc.edu"
+  portNum = ""
 
   def __init__(self):
     
@@ -38,7 +49,7 @@ class ListGen(object):
     self.fall_cutoff = 11   #ATM22 goes up to this month (not including)
     self.day_cutoff = 15 # day of month for dividing ATM21/ATM22
     self.matchEA = False
-    self.EA_file_dir = "/data/lucifer1.1/veritas/lookups/vegas/v2_5_0/ea/"  
+    self.EA_file_dir = "./"  
 
   def runSQL(self, execCMD, database):
     #runs the mysql command provided and returns the output list of results
@@ -93,46 +104,33 @@ class ListGen(object):
     config_ref_T3 = [4,5,6,7,12,13,14,15]
     config_ref_T4 = [8,9,10,11,12,13,14,15]
       
-    tel_config = "_"
-    T1 = "-"
-    T2 = "-"
-    T3 = "-"
-    T4 = "-"
+    DQM_tel_config = "_"
+    T1 = T2 = T3 = T4 = "-"
 
-    if str(tel_cut_mask) in tel_cut_ref_T1 and tel_config_mask in config_ref_T1:
+    if str(tel_cut_mask) in tel_cut_ref_T1:
       T1="1"
-      tel_config += str(T1)
-    elif str(tel_cut_mask) in tel_cut_ref_T1 or tel_config_mask in config_ref_T1:
-      print "DQM and observer reported telescope participation info do not match!"
-      print "Using observer-reported info."
-      get_tel_combo(tel_config_mask)
       
-    if str(tel_cut_mask) in tel_cut_ref_T2 and tel_config_mask in config_ref_T2:
+    if str(tel_cut_mask) in tel_cut_ref_T2:
       T2="2"
-      tel_config += str(T2)
-    elif str(tel_cut_mask) in tel_cut_ref_T2 or tel_config_mask in config_ref_T2:
-      print "DQM and observer reported telescope participation info do not match!"
-      print "Using observer-reported info."
-      get_tel_combo(tel_config_mask)
       
-    if str(tel_cut_mask) in tel_cut_ref_T3 and tel_config_mask in config_ref_T3:
+    if str(tel_cut_mask) in tel_cut_ref_T3:
       T3="3"
-      tel_config += str(T3)
-    elif str(tel_cut_mask) in tel_cut_ref_T3 or tel_config_mask in config_ref_T3:
-      print "DQM and observer reported telescope participation info do not match!"
-      print "Using observer-reported info."
-      get_tel_combo(tel_config_mask)
       
-    if str(tel_cut_mask) in tel_cut_ref_T4 and tel_config_mask in config_ref_T4:
+    if str(tel_cut_mask) in tel_cut_ref_T4:
       T4="4"
-      tel_config += str(T4)
-    elif str(tel_cut_mask) in tel_cut_ref_T4 or tel_config_mask in config_ref_T4:
+    
+    DQM_tel_config += str(T1) + str(T2) + str(T3) + str(T4)
+
+    #observer
+    obs_tel_config = self.get_tel_combo(tel_config_mask)
+    #check for consistency between DQM & observer reported telescope participation
+    if DQM_tel_config == obs_tel_config:
+      return DQM_tel_config
+    else:
       print "DQM and observer reported telescope participation info do not match!"
-      print "Using observer-reported info."
-      get_tel_combo(tel_config_mask)
-
-
-    return tel_config
+      print "DQM reported:", DQM_tel_config, "   observer reported: ", obs_tel_config
+      print "Using DQM-reported info."
+      return DQM_tel_config
 
 
   def get_atm(self, query):
@@ -160,6 +158,7 @@ class ListGen(object):
       return "V4_OldArray"
 
   def get_EA_file(self, EA_config, *user_configs):
+    #EA filename generator based on standard naming conventions
     
     #Get epoch, season, & telescope participation from strings used for grouping
     Epoch = "_" + EA_config[:-11] 
@@ -179,7 +178,7 @@ class ListGen(object):
     Method = "_std" #HFit not yet enabled
 
     cuts = user_configs[0]
-    #Cut-specific options
+    #Cut-specific options - real ugly, should be prettied
     if cuts == "_soft":
       if Epoch == "_V6_PMTUpgrade":
         SizeCut = "_s400"
@@ -228,59 +227,7 @@ class ListGen(object):
                  NumSamples + Offset + SizeCut + TelMulti + Method + MSW + 
                  MSL + MH + ThetaSq + TelConfig + LZA + ".root")
 
-    EA_choices = { "V6_PMTUpgrade_ATM22" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V6_PMTUpgrade_ATM22_T2T3T4" : "ua_ATM22_T2T3T4",
-                   "V6_PMTUpgrade_ATM22_T1T3T4" : "ua_ATM22_T1T3T4",
-                   "V6_PMTUpgrade_ATM22_T1T2T4" : "ua_ATM22_T1T2T4",
-                   "V6_PMTUpgrade_ATM22_T1T2T3" : "ua_ATM22_T1T2T3",
-                   #"ua_ATM22_T2T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"ua_ATM22_T1T3T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"ua_ATM22_T1T2T4" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"ua_ATM22_T1T2T3" : "ea_Oct2012_ua_ATM22_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V6_PMTUpgrade_ATM21" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_Alloff_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V6_PMTUpgrade_ATM21_T2T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_050wobb_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T2T3T4.root",
-                   "V6_PMTUpgrade_ATM21_T1T3T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_050wobb_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T3T4.root",
-                   "V6_PMTUpgrade_ATM21_T1T2T4" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_allOffsets_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T2T4_LZA.root",
-                   "V6_PMTUpgrade_ATM21_T1T2T3" : "ea_Oct2012_ua_ATM21_vegasv250rc5_7sam_allOffsets_s700t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_T1T2T3_LZA.root",
-                   "V5_T1Move_ATM22" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V5_T1Move_ATM22_T2T3T4" : "na_ATM22_T2T3T4",
-                   "V5_T1Move_ATM22_T1T3T4" : "na_ATM22_T1T3T4",
-                   "V5_T1Move_ATM22_T1T2T4" : "na_ATM22_T1T2T4",
-                   "V5_T1Move_ATM22_T1T2T3" : "na_ATM22_T1T2T3",
-                   #"na_ATM22_T2T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM22_T1T3T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM22_T1T2T4" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM22_T1T2T3" : "ea_Oct2012_na_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V5_T1Move_ATM21" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V5_T1Move_ATM21_T2T3T4" : "na_ATM21_T2T3T4",
-                   "V5_T1Move_ATM21_T1T3T4" : "na_ATM21_T1T3T4",
-                   "V5_T1Move_ATM21_T1T2T4" : "na_ATM21_T1T2T4",
-                   "V5_T1Move_ATM21_T1T2T3" : "na_ATM21_T1T2T3",
-                   #"na_ATM21_T2T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM21_T1T3T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM21_T1T2T4" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"na_ATM21_T1T2T3" : "ea_Oct2012_na_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V4_OldArray_ATM22" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V4_OldArray_ATM22_T2T3T4" : "oa_ATM22_T2T3T4",
-                   "V4_OldArray_ATM22_T1T3T4" : "oa_ATM22_T1T3T4",
-                   "V4_OldArray_ATM22_T1T2T4" : "oa_ATM22_T1T2T4",
-                   "V4_OldArray_ATM22_T1T2T3" : "oa_ATM22_T1T2T3",
-                   #"oa_ATM22_T2T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root", 
-                   #"oa_ATM22_T1T3T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"oa_ATM22_T1T2T4" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"oa_ATM22_T1T2T3" : "ea_Oct2012_oa_ATM22_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V4_OldArray_ATM21" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   "V4_OldArray_ATM21_T2T3T4" : "oa_ATM21_T2T3T4",
-                   "V4_OldArray_ATM21_T1T3T4" : "oa_ATM21_T1T3T4",
-                   "V4_OldArray_ATM21_T1T2T4" : "oa_ATM21_T1T2T4",
-                   "V4_OldArray_ATM21_T1T2T3" : "oa_ATM21_T1T2T3",
-                   #"oa_ATM21_T2T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"oa_ATM21_T1T3T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"oa_ATM21_T1T2T4" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   #"oa_ATM21_T1T2T3" : "ea_Oct2012_oa_ATM21_vegasv250rc5_7sam_Alloff_s400t2_std_MSW1p1_MSL1p3_MH7_ThetaSq0p01_LZA.root",
-                   }
     return EAFilename
-    #return EA_choices[EA_config]
 
   def print_runlist(self,groups,outfile,*user_configs):
     #takes dictionary of run groups and output file and
@@ -314,9 +261,10 @@ class ListGen(object):
 def main():
 
   #parsing arguments
-  parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to input the proper paths to EA files and fill out the Config blocks with desired cuts/configs.')
-  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="Input file name with list of stage5 root files, containing paths to the files")
-  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="Output file name written out with the properly formatted runlist") 
+  parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to fill out the Config blocks with desired cuts/configs and plug in EA paths. Use options --EAmatch and --EAdir /path/to/EAfiles/ if you want to automatically generate and plug in EA paths/names based on standard naming convention.')
+  parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="Input file name with list of stage5 root files, containing paths to the files.")
+  parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="Output file for writing formatted runlist. If skipped, will print to screen.") 
+  parser.add_argument('--EAmatch', default='False',action='store_true', help="Set option to enable automatic EA filename generation.") 
   parser.add_argument('--EAdir', nargs='?', default='./', help="Path to directory containing EA files") 
   parser.add_argument('--cuts', nargs='?', default='med',choices=['soft','med','hard','loose'], help="Cuts used for the analysis.") 
   parser.add_argument('--SimModel', nargs='?', default='Oct2012', help="'Oct2012' (GrISUDet) or 'MDL10UA' or 'MDL15NA' etc (KASCADE)") 
@@ -373,6 +321,9 @@ def main():
       groups[fullConfig].append(run)
     else:
       groups[fullConfig] = [run]
+  
+  #Switching auto EA filename generation on if requested
+  runsobj.matchEA = args.EAmatch
   
   #Setting EA file location specified by user. Default is ./
   runsobj.EA_file_dir = args.EAdir 
