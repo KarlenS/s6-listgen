@@ -177,6 +177,13 @@ class ListGen(object):
     NumSamples = "_7sam"
     Method = "_std" #HFit not yet enabled
 
+    if Epoch == "_V6_PMTUpgrade" and SeasonID == "_ATM21":
+        fix = "_fixed150"
+    elif Epoch == "_V5_T1Move" and SeasonID == "_ATM21" and Offset = "_Alloff":
+        fix = "_v1"
+    else:
+        fix = ""
+
     cuts = user_configs[0]
     #Cut-specific options - real ugly, should be prettied
     if cuts == "_soft":
@@ -225,7 +232,7 @@ class ListGen(object):
 
     EAFilename = ("ea" + SimModel + Epoch + SeasonID + SimSource + VegasV + 
                  NumSamples + Offset + SizeCut + TelMulti + Method + MSW + 
-                 MSL + MH + ThetaSq + TelConfig + LZA + ".root")
+                 MSL + MH + ThetaSq + TelConfig + LZA + fix + ".root")
 
     return EAFilename
 
@@ -239,7 +246,8 @@ class ListGen(object):
         for l in group_runs:
           outfile.write( l+"\n" )
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
-        if self.matchEA: EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
+        if self.matchEA == True: 
+          EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
         outfile.write( EA_config + "\n" )
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         GROUPID += 1
@@ -249,8 +257,8 @@ class ListGen(object):
         for l in group_runs:
           outfile.write( l +"\n")
         outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
-
-        if self.matchEA: EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
+        if self.matchEA == True: 
+          EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
         outfile.write( EA_config +"\n")
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
@@ -267,8 +275,8 @@ def main():
   parser.add_argument('--EAmatch', default='False',action='store_true', help="Set option to enable automatic EA filename generation.") 
   parser.add_argument('--EAdir', nargs='?', default='./', help="Path to directory containing EA files") 
   parser.add_argument('--cuts', nargs='?', default='med',choices=['soft','med','hard','loose'], help="Cuts used for the analysis.") 
-  parser.add_argument('--SimModel', nargs='?', default='Oct2012', help="'Oct2012' (GrISUDet) or 'MDL10UA' or 'MDL15NA' etc (KASCADE)") 
-  parser.add_argument('--SimSource', nargs='?', default='GrISUDet', help="Simulation type ('GrISUDet' or 'KASCADE' or 'CARE') used to generate EAs") 
+  parser.add_argument('--SimModel', nargs='?', default='Oct2012', help="'Oct2012' (GrISU) or 'MDL10UA' or 'MDL15NA' etc (KASCADE)") 
+  parser.add_argument('--SimSource', nargs='?', default='GrISU', help="Simulation type ('GrISU' or 'KASCADE' or 'CARE') used to generate EAs") 
   parser.add_argument('--Offset', nargs='?', default='Alloff',choices=['Alloff','050off'], help="Specifies Offsets covered by EA ('Alloff' or '050off')") 
   parser.add_argument('--TelMulti', nargs='?', default='t2', help="Telescope Multiplicity (t2, t3, or t4)") 
   parser.add_argument('--LZA', nargs='?', default='LZA',choices=['LZA',''], help="'LZA' or '' if not LZA ") 
@@ -324,6 +332,7 @@ def main():
   
   #Switching auto EA filename generation on if requested
   runsobj.matchEA = args.EAmatch
+  print runsobj.matchEA
   
   #Setting EA file location specified by user. Default is ./
   runsobj.EA_file_dir = args.EAdir 
