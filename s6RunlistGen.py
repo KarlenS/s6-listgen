@@ -31,6 +31,7 @@
 import subprocess 
 import argparse
 import sys
+import os
 
 class ListGen(object):
     
@@ -39,8 +40,11 @@ class ListGen(object):
   UA_date = "2012-09-01"
 
   #Database information
-  hostName = "romulus.ucsc.edu"
-  portNum = ""
+  #hostName = "romulus.ucsc.edu"
+  #portNum = ""
+  hostName = "lucifer1.spa.umn.edu"
+  portNum = 33060
+
 
   def __init__(self):
     
@@ -157,6 +161,10 @@ class ListGen(object):
     elif date_diff_NA < 0:
       return "V4_OldArray"
 
+  def check_EA_file(self, EApath):
+    if not os.path.isfile(EApath):
+      print "WARNING: EA file %s does not exist!" %(EApath)
+
   def get_EA_file(self, EA_config, *user_configs):
     #EA filename generator based on standard naming conventions
     
@@ -179,7 +187,7 @@ class ListGen(object):
 
     if Epoch == "_V6_PMTUpgrade" and SeasonID == "_ATM21":
         fix = "_fixed150"
-    elif Epoch == "_V5_T1Move" and SeasonID == "_ATM21" and Offset = "_Alloff":
+    elif Epoch == "_V5_T1Move" and SeasonID == "_ATM21" and Offset == "_Alloff":
         fix = "_v1"
     else:
         fix = ""
@@ -248,6 +256,8 @@ class ListGen(object):
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
         if self.matchEA == True: 
           EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
+          self.check_EA_file(EA_config)
+          #print EA_status
         outfile.write( EA_config + "\n" )
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
         GROUPID += 1
@@ -259,6 +269,7 @@ class ListGen(object):
         outfile.write( "[/RUNLIST ID: %s]\n" % (GROUPID) )
         if self.matchEA == True: 
           EA_config = self.EA_file_dir + self.get_EA_file(EA_config,*user_configs)
+          self.check_EA_file(EA_config)
         outfile.write( "[EA ID: %s]\n" % (GROUPID) )
         outfile.write( EA_config +"\n")
         outfile.write( "[/EA ID: %s]\n" % (GROUPID) )
@@ -332,7 +343,6 @@ def main():
   
   #Switching auto EA filename generation on if requested
   runsobj.matchEA = args.EAmatch
-  print runsobj.matchEA
   
   #Setting EA file location specified by user. Default is ./
   runsobj.EA_file_dir = args.EAdir 
