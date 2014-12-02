@@ -142,7 +142,9 @@ class ListGen(object):
     month = int(query.split("\t")[0])
     day = int(query.split("\t")[1]) #can define division for a specific day of month
 
-    if (month <= self.spring_cutoff and day <=self.day_cutoff) or (month >= self.fall_cutoff and day >= self.day_cutoff):
+    if month < self.spring_cutoff or months > self.fall_cutoff:
+      return "_ATM21"
+    elif month == self.spring_cutoff and day <= self.day_cutoff or month == self.fall_cutoff and day >= self.day_cutoff:
       return "_ATM21"
     else:
       return "_ATM22"
