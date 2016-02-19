@@ -43,8 +43,8 @@ class ListGen(object):
     '''Initializing some default values for parameters.'''
     self.hostName = 'lucifer1.spa.umn.edu'
     self.portNum = 33060
-    #hostName = "romulus.ucsc.edu"
-    #portNum = ""
+    #self.hostName = "romulus.ucsc.edu"
+    #self.portNum = ""
 
     #some globals for database, dates, etc
     #Dates for array configs
