@@ -66,7 +66,7 @@ class ListGen(object):
     else:
       return query.rstrip().split('\n')[1]
 
-  
+ 
   def get_tel_cut_mask(self, query):
     '''parses query results for tel_cut_mask'''
     return query.split("\t")[0]
@@ -217,7 +217,9 @@ class ListGen(object):
     '''EA filename generator based on standard naming conventions'''
     
     #Get epoch, season, & telescope participation from strings used for grouping
-    Epoch, SeasonID, TelConfig, DataCat = EA_config.split('_')
+    print EA_config
+    Ver, Array, SeasonID, TelConfig, DataCat = EA_config.split('_')
+    Epoch = Ver + Array
 
     if (TelConfig == '_1234'):
       TelConfig = ''
