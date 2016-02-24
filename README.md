@@ -1,11 +1,16 @@
 s6-listgen
 ==========
 
+TODO:
+---
+improve EA name handling and config info parsing
+---
+
 formats VEGAS stage6 runlist to be compatable with v2.5.1+
 
 author: Karlen Shahinyan
 email: shahin@astro.umn.edu
-last updated: 11/12/14
+last updated: 02/24/16
 
 This is a script to convert list of stage 5 files to the format required by stage6 in vegas 2.5
 The first argument is the stage 5 run list file.
