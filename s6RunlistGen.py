@@ -27,6 +27,7 @@ Winter/Summer atmosphere dates are taken from Henrike's spreadsheet
 import subprocess 
 import sys
 import os
+import numpy as np
 
 try:
   import argparse
@@ -198,7 +199,6 @@ class ListGen(object):
     '''
     date_diff_NA = int(query.split('\t')[1])
     date_diff_UA = int(query.split('\t')[2])
-    print date_diff_NA, date_diff_UA
     
     #Choose upgrade, new, or old array
     if date_diff_UA >= 0:
@@ -217,7 +217,6 @@ class ListGen(object):
     '''EA filename generator based on standard naming conventions'''
     
     #Get epoch, season, & telescope participation from strings used for grouping
-    print EA_config
     Ver, Array, SeasonID, TelConfig, DataCat = EA_config.split('_')
     Epoch = Ver + Array
 
@@ -292,7 +291,7 @@ class ListGen(object):
 
     return EAFilename
 
-  def print_runlist(self,groups,outfile, user_configs):
+  def print_runlist(self,groups,outfile, user_configs, BDT = False, bdtCutsFile= ""):
     '''
     takes dictionary of run groups and output file and
     prints them according to the format required by v2.5.1+
@@ -310,6 +309,32 @@ class ListGen(object):
           #print EA_status
         outfile.write( EA_config + '\n' )
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
+        outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        #writing out cuts for BDTs
+        if BDT:
+          if not os.path.isfile(bdtCutsFile): 
+            sys.exit('BDT cuts file %s does not exist!' %(bdtCutsFile))
+          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          cutCol = bdtCuts.dtype.names[0]
+          colChoice = ""
+          if 'V6' in EA_config:
+            colChoice += "V6_"
+          elif 'V5' in EA_config:
+            colChoice += "V5_"
+          else:
+            sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
+            colChoice += "V4_"
+
+          if "ATM21" in EA_config:
+            colChoice +="ATM21"
+          else:
+            colChoice +="ATM22"
+            
+          for l in zip(bdtCuts[cutCol],bdtCuts[colChoice]):
+            wrtstr = l[0] + " " + str(l[1]) + "\n"
+            outfile.write( wrtstr )
+
+        outfile.write( '[/CONFIG ID: %s]\n' % (GROUPID) )
         GROUPID += 1
       #for all other groups
       else:
@@ -324,6 +349,30 @@ class ListGen(object):
         outfile.write( EA_config +'\n')
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
         outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        #writing out cuts for BDTs
+        if BDT:
+          if not os.path.isfile(bdtCutsFile): 
+            sys.exit('BDT cuts file %s does not exist!' %(bdtCutsFile))
+          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          cutCol = bdtCuts.dtype.names[0]
+          colChoice = ""
+          if "V6" in EA_config:
+            colChoice += "V6_"
+          elif "V5" in EA_config:
+            colChoice += "V5_"
+          else:
+            sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
+            colChoice += "V4_"
+
+          if "ATM21" in EA_config:
+            colChoice +="ATM21"
+          else:
+            colChoice +="ATM22"
+
+          for l in zip(bdtCuts[cutCol],bdtCuts[colChoice]):
+            wrtstr = l[0] + " " + str(l[1]) + "\n"
+            outfile.write( wrtstr )
+
         outfile.write( '[/CONFIG ID: %s]\n' % (GROUPID) )
         GROUPID += 1
 
@@ -341,6 +390,8 @@ def main():
   parser.add_argument('--Offset', nargs='?', default='Alloff',choices=['Alloff','050off'], help="Specifies Offsets covered by EA ('Alloff' or '050off')") 
   parser.add_argument('--TelMulti', nargs='?', default='t2', help="Telescope Multiplicity (t2, t3, or t4)") 
   parser.add_argument('--LZA', nargs='?', default='LZA',choices=['LZA',''], help="'LZA' or '' if not LZA ") 
+  parser.add_argument('--BDT', default=False, action='store_true', help="Automatically writes BDT cuts in the config blocks.") 
+  parser.add_argument('--BDTCutsFile',nargs='?',default = 'BDT_cuts_516_V5.txt', help='File for pulling BDT cuts for the config block, with columns CutName| CutVal(config1) | CutVal(config2)| etc.')
   args = parser.parse_args()
 
   #Define a ListGen object
@@ -426,7 +477,7 @@ def main():
   #print run_configs
 
   #print args.outfile
-  runsobj.print_runlist(groups,args.outfile, user_configs)
+  runsobj.print_runlist(groups,args.outfile, user_configs,args.BDT,args.BDTCutsFile)
   
 if __name__ == '__main__':
   main()
