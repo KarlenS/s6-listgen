@@ -333,7 +333,7 @@ def main():
   parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to fill out the Config blocks with desired cuts/configs and plug in EA paths. Use options --EAmatch and --EAdir /path/to/EAfiles/ if you want to automatically generate and plug in EA paths/names based on standard naming convention.')
   parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="Input file name with list of stage5 root files, containing paths to the files.")
   parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="Output file for writing formatted runlist. If skipped, will print to screen.")
-  parser.add_argument('--EAmatch', default='False',action='store_true', help="Set option to enable automatic EA filename generation.") 
+  parser.add_argument('--EAmatch', default=False,action='store_true', help="Set option to enable automatic EA filename generation.") 
   parser.add_argument('--EAdir', nargs='?', default='./', help="Path to directory containing EA files") 
   parser.add_argument('--cuts', nargs='?', default='med',choices=['soft','med','hard','loose'], help="Cuts used for the analysis.") 
   parser.add_argument('--SimModel', nargs='?', default='Oct2012', help="'Oct2012' (GrISU) or 'MDL10UA' or 'MDL15NA' etc (KASCADE)") 

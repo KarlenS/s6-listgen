@@ -27,7 +27,7 @@ Winter/Summer atmosphere dates are taken from Henrike's spreadsheet
 import subprocess 
 import sys
 import os
-import numpy
+import numpy as np
 
 try:
   import argparse
@@ -313,22 +313,26 @@ class ListGen(object):
         outfile.write( EA_config + '\n' )
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
         outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        #writing out cuts for BDTs
         if BDT:
           bdtCuts = np.genfromtxt(bdtConfigFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          cutCol = bdtCuts.dtype.names[0]
           colChoice = ""
-          if "V6" in user_configs:
+          print EA_config
+          if 'V6' in EA_config:
             colChoice += "V6_"
-          elif "V5" in user_configs:
+          elif 'V5' in EA_config:
             colChoice += "V5_"
           else:
+            print 'HAFIOAHIOSF'
             colChoice += "V4_"
 
-          if "ATM21" in user_configs:
+          if "ATM21" in EA_config:
             colChoice +="ATM21"
           else:
             colChoice +="ATM22"
-
-          for l in zip(bdtCuts['Cuts'],bdtCuts[colChoice]):
+            
+          for l in zip(bdtCuts[cutCol],bdtCuts[colChoice]):
             wrtstr = l[0] + " " + str(l[1]) + "\n"
             outfile.write( wrtstr )
 
@@ -347,8 +351,27 @@ class ListGen(object):
         outfile.write( EA_config +'\n')
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
         outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        #writing out cuts for BDTs
         if BDT:
-            outfile.write( blah )
+          bdtCuts = np.genfromtxt(bdtConfigFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          cutCol = bdtCuts.dtype.names[0]
+          colChoice = ""
+          if "V6" in EA_config:
+            colChoice += "V6_"
+          elif "V5" in EA_config:
+            colChoice += "V5_"
+          else:
+            colChoice += "V4_"
+
+          if "ATM21" in EA_config:
+            colChoice +="ATM21"
+          else:
+            colChoice +="ATM22"
+
+          for l in zip(bdtCuts[cutCol],bdtCuts[colChoice]):
+            wrtstr = l[0] + " " + str(l[1]) + "\n"
+            outfile.write( wrtstr )
+
         outfile.write( '[/CONFIG ID: %s]\n' % (GROUPID) )
         GROUPID += 1
 
@@ -358,7 +381,7 @@ def main():
   parser = argparse.ArgumentParser(description='Takes an input file with paths to stage5 files and generates a runlist for stage6. Note: the runlist still needs to be manually edited to fill out the Config blocks with desired cuts/configs and plug in EA paths. Use options --EAmatch and --EAdir /path/to/EAfiles/ if you want to automatically generate and plug in EA paths/names based on standard naming convention.')
   parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help="Input file name with list of stage5 root files, containing paths to the files.")
   parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout, help="Output file for writing formatted runlist. If skipped, will print to screen.")
-  parser.add_argument('--EAmatch', default='False',action='store_true', help="Set option to enable automatic EA filename generation.") 
+  parser.add_argument('--EAmatch', default=False,action='store_true', help="Set option to enable automatic EA filename generation.") 
   parser.add_argument('--EAdir', nargs='?', default='./', help="Path to directory containing EA files") 
   parser.add_argument('--cuts', nargs='?', default='med',choices=['soft','med','hard','loose'], help="Cuts used for the analysis.") 
   parser.add_argument('--SimModel', nargs='?', default='Oct2012', help="'Oct2012' (GrISU) or 'MDL10UA' or 'MDL15NA' etc (KASCADE)") 
@@ -366,7 +389,7 @@ def main():
   parser.add_argument('--Offset', nargs='?', default='Alloff',choices=['Alloff','050off'], help="Specifies Offsets covered by EA ('Alloff' or '050off')") 
   parser.add_argument('--TelMulti', nargs='?', default='t2', help="Telescope Multiplicity (t2, t3, or t4)") 
   parser.add_argument('--LZA', nargs='?', default='LZA',choices=['LZA',''], help="'LZA' or '' if not LZA ") 
-  parser.add_argument('--BDT', nargs='?', default=False, help="Automatically writes BDT cuts in the config blocks.") 
+  parser.add_argument('--BDT', default=False, action='store_true', help="Automatically writes BDT cuts in the config blocks.") 
   args = parser.parse_args()
 
   #Define a ListGen object
