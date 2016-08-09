@@ -27,6 +27,7 @@ Winter/Summer atmosphere dates are taken from Henrike's spreadsheet
 import subprocess 
 import sys
 import os
+import numpy
 
 try:
   import argparse
@@ -292,12 +293,13 @@ class ListGen(object):
 
     return EAFilename
 
-  def print_runlist(self,groups,outfile, user_configs):
+  def print_runlist(self,groups,outfile, user_configs, BDT = False):
     '''
     takes dictionary of run groups and output file and
     prints them according to the format required by v2.5.1+
     '''
     GROUPID = 0
+    bdtConfigFile = "BDT_cuts_516_V5.txt"
     for EA_config, group_runs in groups.iteritems():
       #handles first group that requires special formatting(not printing config)
       if GROUPID == 0:
@@ -310,6 +312,27 @@ class ListGen(object):
           #print EA_status
         outfile.write( EA_config + '\n' )
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
+        outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        if BDT:
+          bdtCuts = np.genfromtxt(bdtConfigFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          colChoice = ""
+          if "V6" in user_configs:
+            colChoice += "V6_"
+          elif "V5" in user_configs:
+            colChoice += "V5_"
+          else:
+            colChoice += "V4_"
+
+          if "ATM21" in user_configs:
+            colChoice +="ATM21"
+          else:
+            colChoice +="ATM22"
+
+          for l in zip(bdtCuts['Cuts'],bdtCuts[colChoice]):
+            wrtstr = l[0] + " " + str(l[1]) + "\n"
+            outfile.write( wrtstr )
+
+        outfile.write( '[/CONFIG ID: %s]\n' % (GROUPID) )
         GROUPID += 1
       #for all other groups
       else:
@@ -324,6 +347,8 @@ class ListGen(object):
         outfile.write( EA_config +'\n')
         outfile.write( '[/EA ID: %s]\n' % (GROUPID) )
         outfile.write( '[CONFIG ID: %s]\n' % (GROUPID) )
+        if BDT:
+            outfile.write( blah )
         outfile.write( '[/CONFIG ID: %s]\n' % (GROUPID) )
         GROUPID += 1
 
@@ -341,6 +366,7 @@ def main():
   parser.add_argument('--Offset', nargs='?', default='Alloff',choices=['Alloff','050off'], help="Specifies Offsets covered by EA ('Alloff' or '050off')") 
   parser.add_argument('--TelMulti', nargs='?', default='t2', help="Telescope Multiplicity (t2, t3, or t4)") 
   parser.add_argument('--LZA', nargs='?', default='LZA',choices=['LZA',''], help="'LZA' or '' if not LZA ") 
+  parser.add_argument('--BDT', nargs='?', default=False, help="Automatically writes BDT cuts in the config blocks.") 
   args = parser.parse_args()
 
   #Define a ListGen object
@@ -426,7 +452,7 @@ def main():
   #print run_configs
 
   #print args.outfile
-  runsobj.print_runlist(groups,args.outfile, user_configs)
+  runsobj.print_runlist(groups,args.outfile, user_configs,args.BDT)
   
 if __name__ == '__main__':
   main()
