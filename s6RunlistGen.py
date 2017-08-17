@@ -314,7 +314,7 @@ class ListGen(object):
         if BDT:
           if not os.path.isfile(bdtCutsFile): 
             sys.exit('BDT cuts file %s does not exist!' %(bdtCutsFile))
-          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64,np.float64,np.float64])
           cutCol = bdtCuts.dtype.names[0]
           colChoice = ""
           if 'V6' in EA_config:
@@ -322,8 +322,8 @@ class ListGen(object):
           elif 'V5' in EA_config:
             colChoice += "V5_"
           else:
-            sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
             colChoice += "V4_"
+            #sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
 
           if "ATM21" in EA_config:
             colChoice +="ATM21"
@@ -353,7 +353,7 @@ class ListGen(object):
         if BDT:
           if not os.path.isfile(bdtCutsFile): 
             sys.exit('BDT cuts file %s does not exist!' %(bdtCutsFile))
-          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64])
+          bdtCuts = np.genfromtxt(bdtCutsFile,names=True,dtype=["|S20",np.float64,np.float64,np.float64,np.float64,np.float64,np.float64])
           cutCol = bdtCuts.dtype.names[0]
           colChoice = ""
           if "V6" in EA_config:
@@ -361,8 +361,9 @@ class ListGen(object):
           elif "V5" in EA_config:
             colChoice += "V5_"
           else:
-            sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
             colChoice += "V4_"
+            #sys.exit("V4 BDTs not currently supported, get rid of your V4 runs before running this.")
+            #colChoice += "V4_"
 
           if "ATM21" in EA_config:
             colChoice +="ATM21"

@@ -1,0 +1,4 @@
+*.list
+*.txt
+*.pyc
+s6RunlistGen_MIN.py
